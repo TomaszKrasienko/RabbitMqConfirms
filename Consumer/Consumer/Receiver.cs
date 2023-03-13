@@ -1,13 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
 using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace Consumer
 {
@@ -34,37 +28,35 @@ namespace Consumer
             _connection.ConnectionShutdown += RabbitMq_ConnectionShutDow;
         }
         private void RabbitMq_ConnectionShutDow(object sender, ShutdownEventArgs e) => Console.WriteLine("Connection shut down");
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //while(!(stoppingToken.IsCancellationRequested))
-            //{
-            //    Console.WriteLine("coś tam");
-            //}
-            //return Task.CompletedTask;
             stoppingToken.ThrowIfCancellationRequested();
             var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (ch, ea) =>
+            consumer.Received += async (ch, ea) =>
             {
                 var content = Encoding.UTF8.GetString(ea.Body.Span);
-                HandleMessage(content, stoppingToken);
-                if (content == "negative")
+                try
                 {
-                    _channel.BasicNack(ea.DeliveryTag, false, true);
-                }
-                else
-                {
+                    await HandleMessage(content, stoppingToken);
                     _channel.BasicAck(ea.DeliveryTag, false);
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(content);
+                    _channel.BasicReject(ea.DeliveryTag, false);
+                }
+                
             };
             consumer.Shutdown += OnConsumerShoutDown;
             consumer.Registered += OnConsumerRegistered;
             consumer.Unregistered += OnConsumerUnregistered;
             consumer.ConsumerCancelled += OnConsumerCancelled;
-            _channel.BasicConsume("test.queue", false, consumer);
-            return Task.CompletedTask;
+            _channel.BasicConsume("rejected.queue", false, consumer);
         }
         private async Task HandleMessage(string content, CancellationToken cancellationToken)
         {
+            if (content == "throw")
+                throw new Exception();
             Console.WriteLine(content);
         }
         private void OnConsumerShoutDown(object sender, ShutdownEventArgs eventArgs) => Console.WriteLine("Consumer shut down");

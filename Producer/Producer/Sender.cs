@@ -16,7 +16,7 @@ namespace Producer
                 Password = "guest"
             };
         }
-        public void SendMessage(string msg)
+        public void SendMessage(string msg, string routingKey)
         {
             if (string.IsNullOrEmpty(msg))
                 return;
@@ -27,8 +27,8 @@ namespace Producer
                 IBasicProperties properties = channel.CreateBasicProperties();
                 properties.ContentType = "application/json";
                 channel.BasicPublish(
-                    exchange: "test",
-                    routingKey: "test",
+                    exchange: "dlx_main",
+                    routingKey: routingKey,
                     basicProperties: properties,
                     body: body
                     );
