@@ -63,6 +63,5 @@ namespace Consumer
         private void OnConsumerRegistered(object sender, ConsumerEventArgs eventArgs) => Console.WriteLine("Consumer registered");
         private void OnConsumerUnregistered(object sender, ConsumerEventArgs eventArgs) => Console.WriteLine("Consumer unregistered");
         private void OnConsumerCancelled(object sender, ConsumerEventArgs eventArgs) => Console.WriteLine("Consumer cancelled");
-
     }
 }

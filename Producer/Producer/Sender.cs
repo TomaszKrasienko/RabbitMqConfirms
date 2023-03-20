@@ -26,6 +26,8 @@ namespace Producer
                 var body = Encoding.UTF8.GetBytes(msg);
                 IBasicProperties properties = channel.CreateBasicProperties();
                 properties.ContentType = "application/json";
+                channel.ConfirmSelect();
+                channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
                 channel.BasicPublish(
                     exchange: "dlx_main",
                     routingKey: routingKey,
